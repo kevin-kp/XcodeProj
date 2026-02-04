@@ -493,7 +493,7 @@ extension PBXProject {
     }
 
     /// Adds package product for local Swift package
-    private func addLocalSwiftPackageProduct(path: String,
+    private func addLocalSwiftPackageProduct(path: Path,
                                              productName: String,
                                              target: PBXTarget) throws -> XCSwiftPackageProductDependency {
         let objects = try objects()
