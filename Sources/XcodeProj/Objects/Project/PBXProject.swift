@@ -246,13 +246,13 @@ public final class PBXProject: PBXObject {
     public func addLocalSwiftPackage(path: Path,
                                      productName: String,
                                      targetName: String,
-                                     addFileReference: Bool = true) throws -> XCSwiftPackageProductDependency {
+                                     addFileReference: Bool = true) throws -> XCLocalSwiftPackageReference {
         guard path.isRelative else { throw PBXProjError.pathIsAbsolute(path) }
 
         let objects = try objects()
 
         guard let target = targets.first(where: { $0.name == targetName }) else { throw PBXProjError.targetNotFound(targetName: targetName) }
-
+        let reference = try addLocalSwiftPackageReference(path: path)
         // Product
         let productDependency = try addLocalSwiftPackageProduct(path: path,
                                                                 productName: productName,
@@ -281,7 +281,7 @@ public final class PBXProject: PBXObject {
             mainGroup.children.append(reference)
         }
 
-        return productDependency
+        return reference
     }
 
     // MARK: - Init
@@ -477,9 +477,23 @@ extension PBXProject {
 
         return productDependency
     }
+  
+    /// Adds reference for local Swift package
+    private func addLocalSwiftPackageReference(path: Path) throws -> XCLocalSwiftPackageReference {
+        let reference: XCLocalSwiftPackageReference
+        if let package = localPackages.first(where: { $0.relativePath == path.string }) {
+            reference = package
+        } else {
+            reference = XCLocalSwiftPackageReference(relativePath: path.string)
+            try objects().add(object: reference)
+            localPackages.append(reference)
+        }
+
+        return reference
+    }
 
     /// Adds package product for local Swift package
-    private func addLocalSwiftPackageProduct(path: Path,
+    private func addLocalSwiftPackageProduct(path: String,
                                              productName: String,
                                              target: PBXTarget) throws -> XCSwiftPackageProductDependency {
         let objects = try objects()
@@ -487,9 +501,9 @@ extension PBXProject {
         let productDependency: XCSwiftPackageProductDependency
         // Avoid duplication
         if let product = objects.swiftPackageProductDependencies.first(where: { $0.value.productName == productName }) {
-            guard objects.fileReferences.first(where: { $0.value.name == productName })?.value.path == path.string else {
-                throw PBXProjError.multipleLocalPackages(productName: productName)
-            }
+//            guard objects.fileReferences.first(where: { $0.value.name == productName })?.value.path == path.string else {
+//                throw PBXProjError.multipleLocalPackages(productName: productName)
+//            }
             productDependency = product.value
         } else {
             productDependency = XCSwiftPackageProductDependency(productName: productName)
